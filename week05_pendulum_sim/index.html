@@ -258,11 +258,16 @@
   syncParams();
 
   // ---------- 重置摆动 ----------
-  resetEl.addEventListener('click', () => {
+  // 具名函数定义在 IIFE 闭包内，可直接捕获 theta/omega/t/INIT_THETA，
+  // 并显式挂到 window，使 <button onclick="resetAnimation()"> 这类内联调用
+  // 也能命中，彻底规避 "resetAnimation is not defined" 作用域/事件绑定报错。
+  function resetPendulum() {
     theta = INIT_THETA;   // 精准回到 45°
     omega = 0;
     t     = 0;
-  });
+  }
+  resetEl.addEventListener('click', resetPendulum);
+  window.resetAnimation = resetPendulum;   // 兼容内联 onclick 调用
 
   // ---------- 数值积分 ----------
   // Semi-implicit (symplectic) Euler + sub-stepping
