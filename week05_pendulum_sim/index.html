@@ -13,8 +13,11 @@
       "PingFang SC", "Microsoft YaHei", sans-serif;
     overflow: hidden;
   }
+  body { display: flex; flex-direction: column; }
+  .stage { position: relative; flex: 1 1 0; min-height: 0; overflow: hidden; }
   canvas {
     display: block;
+    width: 100%; height: 100%;
     background: #1a1a24;
   }
   .panel {
@@ -42,11 +45,89 @@
     margin-bottom: 6px;
     text-transform: uppercase;
   }
+  /* ---------- 底部参数控制条（增量新增） ---------- */
+  .controls {
+    flex: 0 0 auto;
+    padding: 14px 24px 10px;
+    background: rgba(255, 255, 255, 0.04);
+    border-top: 1px solid rgba(139, 233, 253, 0.18);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    user-select: none;
+  }
+  .controls-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 16px 34px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .ctrl { flex: 1 1 210px; min-width: 190px; }
+  .ctrl-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 13px;
+    margin-bottom: 7px;
+    color: #b8b8c8;
+  }
+  .ctrl-head b { color: #8be9fd; font-weight: 500; }
+  input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: linear-gradient(
+      90deg, rgba(139, 233, 253, 0.75), rgba(139, 233, 253, 0.16));
+    outline: none;
+    cursor: pointer;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: #8be9fd;
+    border: 2px solid #12121a;
+    box-shadow: 0 0 10px rgba(139, 233, 253, 0.8);
+    cursor: pointer;
+  }
+  input[type="range"]::-moz-range-track {
+    height: 4px; border-radius: 2px;
+    background: rgba(139, 233, 253, 0.25);
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: #8be9fd;
+    border: 2px solid #12121a;
+    box-shadow: 0 0 10px rgba(139, 233, 253, 0.8);
+    cursor: pointer;
+  }
+  .btn-reset {
+    flex: 0 0 auto;
+    padding: 10px 22px;
+    font: inherit;
+    font-size: 13px;
+    color: #8be9fd;
+    background: rgba(139, 233, 253, 0.08);
+    border: 1px solid rgba(139, 233, 253, 0.45);
+    border-radius: 8px;
+    cursor: pointer;
+    letter-spacing: 1px;
+    transition: background .18s ease, box-shadow .18s ease, transform .18s ease;
+  }
+  .btn-reset:hover {
+    background: rgba(139, 233, 253, 0.18);
+    box-shadow: 0 0 14px rgba(139, 233, 253, 0.25);
+  }
+  .btn-reset:active { transform: translateY(1px); }
+
   .footer {
-    position: fixed;
-    bottom: 16px;
-    left: 50%;
-    transform: translateX(-50%);
+    margin-top: 12px;
+    text-align: center;
     font-size: 12px;
     color: rgba(139, 233, 253, 0.55);
     letter-spacing: 1px;
@@ -55,14 +136,48 @@
 </style>
 </head>
 <body>
-<canvas id="canvas"></canvas>
+<div class="stage">
+  <canvas id="canvas"></canvas>
+</div>
+
+<div class="controls">
+  <div class="controls-row">
+    <div class="ctrl">
+      <div class="ctrl-head">
+        <span><b>摆长 L</b></span>
+        <span class="val" id="lblL">200 px</span>
+      </div>
+      <input type="range" id="lenRange" min="100" max="350" step="1" value="200">
+    </div>
+
+    <div class="ctrl">
+      <div class="ctrl-head">
+        <span><b>重力 g</b></span>
+        <span class="val" id="lblG">9.8 m/s²</span>
+      </div>
+      <input type="range" id="gRange" min="1" max="25" step="0.1" value="9.8">
+    </div>
+
+    <div class="ctrl">
+      <div class="ctrl-head">
+        <span><b>阻尼 c</b></span>
+        <span class="val" id="lblD">0.004</span>
+      </div>
+      <input type="range" id="dRange" min="0" max="0.01" step="0.001" value="0.004">
+    </div>
+
+    <button type="button" class="btn-reset" id="resetBtn">重置摆动</button>
+  </div>
+
+  <div class="footer">SIMPLE PENDULUM · HARMONIC OSCILLATION · rAF DRIVEN</div>
+</div>
 
 <div class="panel left">
   <div class="title">Pendulum · Parameters</div>
-  <div><b>摆长 L</b> &nbsp;= <span class="val">200</span> px</div>
-  <div><b>重力 g</b> &nbsp;= <span class="val">9.8</span> m/s²</div>
+  <div><b>摆长 L</b> &nbsp;= <span class="val" id="pL">200</span> px</div>
+  <div><b>重力 g</b> &nbsp;= <span class="val" id="pG">9.8</span> m/s²</div>
   <div><b>初始角度</b> &nbsp;= <span class="val">45°</span></div>
-  <div><b>周期 T</b> &nbsp;= 2π√(L/g) ≈ <span class="val">28.4</span> s</div>
+  <div><b>周期 T</b> &nbsp;= 2π√(L/g) ≈ <span class="val" id="pT">28.4</span> s</div>
 </div>
 
 <div class="panel right">
@@ -73,34 +188,81 @@
   <div><b>t</b> &nbsp;<span class="val" id="time">0.00</span> s</div>
 </div>
 
-<div class="footer">SIMPLE PENDULUM · HARMONIC OSCILLATION · rAF DRIVEN</div>
-
 <script>
 (() => {
   'use strict';
 
-  const canvas = document.getElementById('canvas');
-  const ctx    = canvas.getContext('2d');
-  const angleEl  = document.getElementById('angle');
-  const omegaEl  = document.getElementById('omega');
-  const speedEl  = document.getElementById('speed');
-  const timeEl   = document.getElementById('time');
+  const canvas  = document.getElementById('canvas');
+  const ctx     = canvas.getContext('2d');
+  const stage   = document.querySelector('.stage');
+  const angleEl = document.getElementById('angle');
+  const omegaEl = document.getElementById('omega');
+  const speedEl = document.getElementById('speed');
+  const timeEl  = document.getElementById('time');
+
+  // ---------- 控制条元素（增量新增） ----------
+  const lenEl   = document.getElementById('lenRange');
+  const gEl     = document.getElementById('gRange');
+  const dEl     = document.getElementById('dRange');
+  const lblL    = document.getElementById('lblL');
+  const lblG    = document.getElementById('lblG');
+  const lblD    = document.getElementById('lblD');
+  const pL      = document.getElementById('pL');
+  const pG      = document.getElementById('pG');
+  const pT      = document.getElementById('pT');
+  const resetEl = document.getElementById('resetBtn');
 
   // ---------- 画布自适应 ----------
+  // 画布不再铺满窗口：高度 = 视口高度 - 底部控制条高度
   let W = 0, H = 0;
   function resize() {
-    W = canvas.width  = window.innerWidth;
-    H = canvas.height = window.innerHeight;
+    W = canvas.width  = Math.max(1, stage.clientWidth);
+    H = canvas.height = Math.max(1, stage.clientHeight);
   }
   window.addEventListener('resize', resize);
   resize();
 
   // ---------- 物理参数 ----------
-  const L  = 200;                    // 摆长 (像素)
-  const g  = 9.8;                    // 重力加速度
-  let theta = 45 * Math.PI / 180;    // 初始角度 45° (弧度)
-  let omega = 0;                     // 角速度 (rad/s)
-  let t     = 0;                     // 累计物理时间 (s)
+  const INIT_THETA = 45 * Math.PI / 180;  // 初始角度 45° (弧度)
+  // 滑块 c 的最大值为 0.010，直接作为线性阻尼系数时衰减极慢，
+  // 这里乘一个增益，让满量程呈现"明显但仍属欠阻尼"的自然衰减。
+  const DAMP_GAIN  = 4;
+
+  let L        = 200;      // 摆长 (像素)，由滑块驱动
+  let g        = 9.8;      // 重力加速度，由滑块驱动
+  let damping  = 0.004;    // 阻尼系数，由滑块驱动
+  let theta    = INIT_THETA;
+  let omega    = 0;        // 角速度 (rad/s)
+  let t        = 0;        // 累计物理时间 (s)
+
+  // ---------- 参数同步（滑块 -> 物理 & 标签） ----------
+  function syncParams() {
+    L       = parseFloat(lenEl.value);
+    g       = parseFloat(gEl.value);
+    damping = parseFloat(dEl.value);
+
+    lblL.textContent = L + ' px';
+    lblG.textContent = g.toFixed(1) + ' m/s²';
+    lblD.textContent = damping.toFixed(3);
+
+    // 顶部参数面板同步显示
+    pL.textContent = L;
+    pG.textContent = g.toFixed(1);
+    pT.textContent = (2 * Math.PI * Math.sqrt(L / g)).toFixed(1);
+  }
+
+  [lenEl, gEl, dEl].forEach(el => {
+    el.addEventListener('input', syncParams);   // 拖动即时生效
+    el.addEventListener('change', syncParams);  // 键盘 / 点击轨道兜底
+  });
+  syncParams();
+
+  // ---------- 重置摆动 ----------
+  resetEl.addEventListener('click', () => {
+    theta = INIT_THETA;   // 精准回到 45°
+    omega = 0;
+    t     = 0;
+  });
 
   // ---------- 数值积分 ----------
   // Semi-implicit (symplectic) Euler + sub-stepping
@@ -110,9 +272,11 @@
 
   function step() {
     const subDt = FRAME_DT / SUB_STEPS;
+    const c     = damping * DAMP_GAIN;
     for (let i = 0; i < SUB_STEPS; i++) {
-      // θ'' = -(g/L) * sin(θ)   —— 严格非线性方程（不取小角近似）
-      const alpha = -(g / L) * Math.sin(theta);
+      // θ'' = -(g/L) * sin(θ) - c * θ'
+      //       —— 严格非线性方程（不取小角近似）+ 线性阻尼
+      const alpha = -(g / L) * Math.sin(theta) - c * omega;
       omega += alpha * subDt;
       theta += omega * subDt;
     }
